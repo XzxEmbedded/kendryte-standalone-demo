@@ -16,23 +16,18 @@
 #include <sysctl.h>
 #include <otp.h>
 #include "uart.h"
+#include "fpioa.h"
+#include "gpio.h"
 
 uint8_t otp_read[16*1024];
 uint8_t chipid[OTP_SYSTEM_BLOCK_SIZE];
 uint8_t aes_key[16] = {0};
 
-int main(void)
+void otp_test(void)
 {
 	otp_status_t status;
 
-	//sysctl_pll_set_freq(SYSCTL_PLL0, 320000000);
-	sysctl_clock_set_clock_select(SYSCTL_CLOCK_SELECT_ACLK, SYSCTL_SOURCE_IN0);
-	uart_debug_init(-1);
-
-	uint64_t core = current_coreid();
-
 	otp_init(0);
-	printf("Core %ld Hello world\n", core);
 
 	status = otp_read_byte(0x0, otp_read, 0x3FF0);
 	printf("otp_read_byte status = %d \n", status);
@@ -60,6 +55,47 @@ int main(void)
 	else
 		printf("aes key fail\n");
 	printf("\n");
+}
+
+void led_test()
+{
+	uint8_t i;
+
+	/* IO-12:GPIO pin3, I0-13:GPIO pin4 */
+	fpioa_set_function(12, FUNC_GPIO3);
+	fpioa_set_function(13, FUNC_GPIO4);
+
+	gpio_init();
+	gpio_set_drive_mode(3, GPIO_DM_OUTPUT);
+	gpio_set_drive_mode(4, GPIO_DM_OUTPUT);
+	gpio_pin_value_t value1 = GPIO_PV_HIGH;
+	gpio_pin_value_t value2 = GPIO_PV_HIGH;
+	gpio_set_pin(3, value1);
+	gpio_set_pin(4, value2);
+
+	for (i = 0; i < 10; i++ ) {
+		sleep(1);
+		gpio_set_pin(3, value1 = !value1);
+		gpio_set_pin(4, value2 = !value2);
+	}
+}
+
+int main(void)
+{
+	//sysctl_pll_set_freq(SYSCTL_PLL0, 320000000);
+	sysctl_clock_set_clock_select(SYSCTL_CLOCK_SELECT_ACLK, SYSCTL_SOURCE_IN0);
+
+	/* Defalut for UART DEVICE3 */
+	uart_debug_init(-1);
+
+	uint64_t core = current_coreid();
+	printf("Core %ld Hello world\n", core);
+
+	/* OTP test */
+	otp_test();
+
+	/* LED test*/
+	led_test();
 
 	while(1)
 		;
