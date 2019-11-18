@@ -73,10 +73,11 @@ void led_test()
 	gpio_set_pin(3, value1);
 	gpio_set_pin(4, value2);
 
-	for (i = 0; i < 10; i++ ) {
+	while (1) {
 		sleep(1);
 		gpio_set_pin(3, value1 = !value1);
 		gpio_set_pin(4, value2 = !value2);
+		printf("Led test!\n");
 	}
 }
 
@@ -92,7 +93,7 @@ int main(void)
 	printf("Core %ld Hello world\n", core);
 
 	/* OTP test */
-	otp_test();
+	//otp_test();
 
 	/* LED test*/
 	led_test();
